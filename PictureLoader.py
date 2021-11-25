@@ -1,8 +1,13 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_restful import request
-from flask_restful import Api, Resource, reqparse
+import random
 
 app = Flask(__name__)
+
+class Pictures:
+    def __init__(self):
+        self.pictures = get_list_of_dict_from_csv()
+        self.all_categories = get_all_categories(self.pictures)
 
 def get_all_categories(lst: list) -> list:
     '''
@@ -37,26 +42,38 @@ def get_list_of_dict_from_csv() -> list:
             allpic.append(picdb)
     return allpic
 
-def get_pic(pictures: list,needed_categories: list) -> str:
+def get_pic(pictures: list, needed_categories: list) -> str:
+    '''
+    Получение требуемых картинок по тегам
+    '''
     needed_pictures = []
     for pic in pictures:
         for category in needed_categories:
-            if category in pic['categs']:
+            if category in pic['categs'] and pic['name'] not in needed_pictures:
                 needed_pictures.append(pic['name'])
-    return ', '.join(needed_pictures)
+    if needed_pictures:
+        rand = random.randint(0, len(needed_pictures) - 1)
+        pic_class.pictures[rand]['amount'] = str(int(pic_class.pictures[rand]['amount']) - 1)
+        if int(pic_class.pictures[rand]['amount']) == 0:
+            pic_class.pictures.pop(rand)
+        return needed_pictures[rand]
+    else:
+        return None
 
 @app.route('/')
 def index():
     categories = request.args.keys()
-    if not categories:
-        return 'Введите требуемые категории'
     catlist = []
-    for cat in categories:
-        catlist.append(request.args.get(cat))
-    if len(catlist) > 10:
-        return 'Слишком много категорий!'
-    res = get_pic(get_list_of_dict_from_csv(), catlist)
-    return res
+    if not categories:
+        catlist = pic_class.all_categories
+    else:
+        for cat in categories:
+            catlist.append(request.args.get(cat))
+        if len(catlist) > 10:
+            return 'Слишком много категорий!'
+    res = get_pic(pic_class.pictures, catlist)
+    return f'''<img src="/static/images/{res}.jpg">''' if res else 'Картинки закончились'
 
 if __name__ == '__main__':
+    pic_class = Pictures()
     app.run(debug=True)
