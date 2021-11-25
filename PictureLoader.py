@@ -8,6 +8,7 @@ class Pictures:
     def __init__(self):
         self.pictures = get_list_of_dict_from_csv()
         self.all_categories = get_all_categories(self.pictures)
+        self.last = ''
 
 def get_all_categories(lst: list) -> list:
     '''
@@ -53,9 +54,20 @@ def get_pic(pictures: list, needed_categories: list) -> str:
                 needed_pictures.append(pic['name'])
     if needed_pictures:
         rand = random.randint(0, len(needed_pictures) - 1)
-        pic_class.pictures[rand]['amount'] = str(int(pic_class.pictures[rand]['amount']) - 1)
-        if int(pic_class.pictures[rand]['amount']) == 0:
-            pic_class.pictures.pop(rand)
+        if len(needed_pictures) > 1 and needed_pictures[rand] == pic_class.last: #механизм неповторения картинки
+            for i in range(len(needed_pictures)):
+                if i != rand:
+                    rand = i
+                    break
+        for i in range(len(pic_class.pictures)):
+            if pic_class.pictures[i]['name'] != needed_pictures[rand]:
+                continue
+            else:
+                pic_class.pictures[i]['amount'] = str(int(pic_class.pictures[i]['amount']) - 1)
+                pic_class.last = pic_class.pictures[i]['name']
+            if int(pic_class.pictures[i]['amount']) == 0:
+                pic_class.pictures.pop(i)
+                break
         return needed_pictures[rand]
     else:
         return None
