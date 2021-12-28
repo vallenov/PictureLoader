@@ -4,11 +4,13 @@ import random
 
 app = Flask(__name__)
 
+
 class Pictures:
     def __init__(self):
         self.pictures = get_list_of_dict_from_csv()
         self.all_categories = get_all_categories(self.pictures)
         self.last = ''
+
 
 def get_all_categories(lst: list) -> list:
     '''
@@ -20,6 +22,7 @@ def get_all_categories(lst: list) -> list:
             if cat not in allcatlist:
                 allcatlist.append(cat)
     return allcatlist
+
 
 def get_list_of_dict_from_csv() -> list:
     '''
@@ -43,7 +46,8 @@ def get_list_of_dict_from_csv() -> list:
             allpic.append(picdb)
     return allpic
 
-def get_pic(pictures: list, needed_categories: list) -> str:
+
+def get_pic(pictures: list, needed_categories: list) -> str or None:
     '''
     Получение требуемых картинок по тегам
     '''
@@ -72,17 +76,21 @@ def get_pic(pictures: list, needed_categories: list) -> str:
     else:
         return None
 
-@app.route('/')
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    categories = request.args.keys()
     catlist = []
-    if not categories:
-        catlist = pic_class.all_categories
+    if request.method == 'POST':
+        catlist = request.form.get('categ').split(',')
     else:
-        for cat in categories:
-            catlist.append(request.args.get(cat))
-        if len(catlist) > 10:
-            return 'Слишком много категорий!'
+        categories = request.args.keys()
+        if not categories:
+            catlist = pic_class.all_categories
+        else:
+            for cat in categories:
+                catlist.append(request.args.get(cat))
+            if len(catlist) > 10:
+                return 'Слишком много категорий!'
     res = get_pic(pic_class.pictures, catlist)
     return f'''<img src="/static/images/{res}.jpg">''' if res else 'Картинки закончились'
 
